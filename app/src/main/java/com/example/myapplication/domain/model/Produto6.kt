@@ -14,7 +14,7 @@ data class Produto6(
     // Construtor vazio (baseado nas Restrições/Padrões)
     // O Firestore precisa disso!
     constructor() : this(
-        id = "",
+        id ="",
         nome = "",
         preco = 0.0,
         descricao = "",
