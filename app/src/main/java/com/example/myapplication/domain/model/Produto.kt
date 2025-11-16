@@ -1,5 +1,7 @@
 package com.example.myapplication.domain.model
 
+package com.example.myapplication.domain.model
+
 // As respostas do checklist viraram este Model:
 data class Produto(
     // Identidade -> Produto
@@ -21,3 +23,4 @@ data class Produto(
         urlImagem = ""
     )
 }
+
