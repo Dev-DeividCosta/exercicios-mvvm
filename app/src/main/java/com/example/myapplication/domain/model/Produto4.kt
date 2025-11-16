@@ -1,7 +1,7 @@
 package com.example.myapplication.domain.model
 
 // As respostas do checklist viraram este Model:
-data class Produto3(
+data class Produto4(
     // Identidade -> Produto
 
     // Propriedades e Tipos de Dados
