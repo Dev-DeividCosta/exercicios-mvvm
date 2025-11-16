@@ -1,6 +1,6 @@
 package com.example.myapplication.domain.model
 
-data class Produto6(
+data class Produto1(
     val id: String,
     val nome: String,
     val preco: Double,
