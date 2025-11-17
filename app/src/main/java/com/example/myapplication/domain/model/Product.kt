@@ -4,8 +4,8 @@ data class Product(
     val id: String,
     val name: String,
     val price: Double,
-    val descricao: String,
-    val urlImagem: String
+    val description: String,
+    val imageUrl: String
 ) {
     constructor() : this(
         "", "", 0.0, "", ""

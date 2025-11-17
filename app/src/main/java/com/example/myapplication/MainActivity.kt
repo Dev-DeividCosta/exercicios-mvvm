@@ -1,88 +1,3 @@
-//package com.example.myapplication
-//
-//import android.os.Bundle
-//import androidx.activity.ComponentActivity
-//import androidx.activity.compose.setContent
-//import androidx.activity.enableEdgeToEdge
-//import androidx.compose.foundation.layout.Arrangement
-//import androidx.compose.foundation.layout.Column
-//import androidx.compose.foundation.layout.fillMaxSize
-//import androidx.compose.foundation.layout.padding
-//import androidx.compose.material3.Button
-//import androidx.compose.material3.Scaffold
-//import androidx.compose.material3.Text
-//import androidx.compose.runtime.Composable
-//import androidx.compose.runtime.collectAsState
-//import androidx.compose.runtime.getValue
-//import androidx.compose.runtime.mutableStateOf
-//import androidx.compose.runtime.remember
-//import androidx.compose.runtime.setValue
-//import androidx.compose.ui.Alignment
-//import androidx.compose.ui.Modifier
-//import androidx.compose.ui.tooling.preview.Preview
-//import androidx.lifecycle.viewmodel.compose.viewModel
-//import com.example.myapplication.ui.theme.MyApplicationTheme
-//import com.example.myapplication.viewmodel.ContadorViewModel
-//
-//class MainActivity : ComponentActivity() {
-//    override fun onCreate(savedInstanceState: Bundle?) {
-//        super.onCreate(savedInstanceState)
-//        enableEdgeToEdge()
-//        setContent {
-//            MyApplicationTheme {
-//                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-//
-//                    val viewModel: ContadorViewModel = viewModel()
-//
-//                    val contadorState by viewModel.contador.collectAsState()
-//
-//                    ContadorScreen(
-//                        contador = contadorState,
-//
-//                        onBotaoClicado = {
-//                            viewModel.incrementar()
-//                        },
-//
-//                        modifier = Modifier
-//                            .padding(innerPadding)
-//                            .fillMaxSize()
-//                    )
-//                }
-//            }
-//        }
-//    }
-//}
-//
-//@Composable
-//fun ContadorScreen(
-//    contador: Int,
-//    onBotaoClicado: () -> Unit,
-//    modifier: Modifier = Modifier
-//    ) {
-//    Column(
-//        modifier = modifier,
-//        horizontalAlignment = Alignment.CenterHorizontally,
-//        verticalArrangement = Arrangement.Center
-//    ) {
-//        Text(text = "Você clicou $contador vezes")
-//
-//        Button(onClick = onBotaoClicado ) {
-//            Text(text = "Clique-me")
-//        }
-//    }
-//}
-//
-//@Preview(showBackground = true)
-//@Composable
-//fun GreetingPreview() {
-//    MyApplicationTheme {
-//        ContadorScreen(
-//            contador = 0,
-//            onBotaoClicado = {},
-//            modifier = Modifier.fillMaxSize())
-//    }
-//}
-
 package com.example.myapplication
 
 import android.os.Bundle
@@ -91,29 +6,44 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-// 1. Importa sua tela
+import com.example.myapplication.domain.model.Product
+import com.example.myapplication.ui.screens.ProductFormScreen
 import com.example.myapplication.ui.screens.ProductListScreen
-// (O nome do seu tema)
 import com.example.myapplication.ui.theme.MyApplicationTheme
+import com.example.myapplication.ui.viewmodel.ProductViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import androidx.hilt.navigation.compose.hiltViewModel
 
-// 2. @AndroidEntryPoint é ESSENCIAL
-// Ele "liga" o Hilt nesta Activity,
-// permitindo que o ViewModel (hiltViewModel()) seja injetado na sua tela.
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            // 3. Usa o tema do seu app
             MyApplicationTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    // 4. CHAMA A SUA TELA AQUI
-                    ProductListScreen()
+                    val viewModel: ProductViewModel = hiltViewModel()
+
+                    // Estado para alternar entre a lista e o formulário
+                    var showForm by remember { mutableStateOf(false) }
+
+                    if (showForm) {
+                        ProductFormScreen(
+                            onProductSave = { product: Product ->
+                                viewModel.addProduct(product)
+                                showForm = false // Volta para a lista
+                            }
+                        )
+                    } else {
+                        ProductListScreen(
+                            viewModel = viewModel,
+                            onAddProductClick = { showForm = true }
+                        )
+                    }
                 }
             }
         }
