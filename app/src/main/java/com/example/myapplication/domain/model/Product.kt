@@ -4,10 +4,9 @@ data class Product(
     val id: String,
     val name: String,
     val price: Double,
-    val description: String,
-    val imageUrl: String
+    val stock: Int
 ) {
     constructor() : this(
-        "", "", 0.0, "", ""
+        "", "", 0.0, 0
     )
 }
