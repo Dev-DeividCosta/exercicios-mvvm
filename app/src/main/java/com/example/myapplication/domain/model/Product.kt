@@ -1,11 +1,13 @@
 package com.example.myapplication.domain.model
 
-data class Produto1(
+data class Product(
     val id: String,
-    val nome: String,
-    val preco: Double,
+    val name: String,
+    val price: Double,
     val descricao: String,
     val urlImagem: String
 ) {
-    constructor() : this("", "", 0.0, "", "")
+    constructor() : this(
+        "", "", 0.0, "", ""
+    )
 }
