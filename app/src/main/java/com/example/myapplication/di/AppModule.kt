@@ -8,7 +8,6 @@ import com.example.myapplication.domain.repository.ClientRepository
 import com.example.myapplication.domain.repository.ProductRepository
 import com.example.myapplication.domain.repository.SaleRepository
 import com.example.myapplication.domain.repository.UserRepository
-import com.example.padrecicero.domain.repository.ClientRepository
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.Module
 import dagger.Provides
