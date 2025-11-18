@@ -15,12 +15,60 @@ class UserRepositoryImpl @Inject constructor(
 
     private val collection = firestore.collection("users")
 
-    override suspend fun saveUser(user: User) {
+    override suspend fun createUser(user: User) {
         try {
-            if (user.id.isNotBlank()) {
-                // Aqui usamos o UID do Auth como ID do documento
-                collection.document(user.id).set(user).await()
+            val docRef = if (user.id.isNotBlank()) {
+                collection.document(user.id)
+            } else {
+                collection.document()
             }
+            val userToSave = user.copy(id = docRef.id)
+            docRef.set(userToSave).await()
+        } catch (e: Exception) {
+            throw e
+        }
+    }
+
+    override fun getAllUsers(): Flow<List<User>> = callbackFlow {
+        val listener = collection.addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                close(error)
+                return@addSnapshotListener
+            }
+            snapshot?.let {
+                trySend(it.toObjects(User::class.java))
+            }
+        }
+        awaitClose { listener.remove() }
+    }
+
+    override fun getUsersByRole(role: String): Flow<List<User>> = callbackFlow {
+        val listener = collection
+            .whereEqualTo("role", role)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                snapshot?.let {
+                    trySend(it.toObjects(User::class.java))
+                }
+            }
+        awaitClose { listener.remove() }
+    }
+
+    override suspend fun updateUser(user: User) {
+        try {
+            if (user.id.isBlank()) throw IllegalArgumentException("User ID is missing")
+            collection.document(user.id).set(user).await()
+        } catch (e: Exception) {
+            throw e
+        }
+    }
+
+    override suspend fun deleteUser(userId: String) {
+        try {
+            collection.document(userId).delete().await()
         } catch (e: Exception) {
             throw e
         }
