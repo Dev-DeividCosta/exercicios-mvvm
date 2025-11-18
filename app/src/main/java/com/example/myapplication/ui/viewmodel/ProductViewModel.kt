@@ -29,9 +29,9 @@ class ProductViewModel @Inject constructor(
     }
 
     // Exemplo de como adicionar produto (se precisar criar uma tela para isso depois)
-    fun addProduct(name: String, price: Double, stock: Int) {
+    fun addProduct(name: String, price: Double, description: String, stock: Int) {
         viewModelScope.launch {
-            val prod = Product(id = "", name = name, price = price, stockQuantity = stock)
+            val prod = Product(id = "", name = name, price = price, description = description, stockQuantity = stock)
             repository.createProduct(prod)
         }
     }
