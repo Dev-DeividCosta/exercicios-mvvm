@@ -22,12 +22,12 @@ class SaleRepositoryImpl @Inject constructor(
             val newSale = sale.copy(id = docRef.id)
             docRef.set(newSale).await()
         } catch (e: Exception) {
+            e.printStackTrace()
             throw e
         }
     }
 
     override fun getAllSales(): Flow<List<Sale>> = callbackFlow {
-        // Ordena pela data (mais recente primeiro)
         val listener = collection
             .orderBy("date", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
@@ -35,14 +35,11 @@ class SaleRepositoryImpl @Inject constructor(
                     close(error)
                     return@addSnapshotListener
                 }
-                snapshot?.let {
-                    trySend(it.toObjects(Sale::class.java))
-                }
+                snapshot?.let { trySend(it.toObjects(Sale::class.java)) }
             }
         awaitClose { listener.remove() }
     }
 
-    // Útil para mostrar o histórico de compras na tela do Cliente
     override fun getSalesByClientId(clientId: String): Flow<List<Sale>> = callbackFlow {
         val listener = collection
             .whereEqualTo("clientId", clientId)
@@ -52,10 +49,53 @@ class SaleRepositoryImpl @Inject constructor(
                     close(error)
                     return@addSnapshotListener
                 }
-                snapshot?.let {
-                    trySend(it.toObjects(Sale::class.java))
-                }
+                snapshot?.let { trySend(it.toObjects(Sale::class.java)) }
             }
         awaitClose { listener.remove() }
+    }
+
+    override fun getSaleById(saleId: String): Flow<Sale?> = callbackFlow {
+        val listener = collection.document(saleId).addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                close(error)
+                return@addSnapshotListener
+            }
+            if (snapshot != null && snapshot.exists()) {
+                trySend(snapshot.toObject(Sale::class.java))
+            } else {
+                trySend(null)
+            }
+        }
+        awaitClose { listener.remove() }
+    }
+
+    override fun getSalesBySellerId(sellerId: String): Flow<List<Sale>> = callbackFlow {
+        val listener = collection
+            .whereEqualTo("sellerId", sellerId)
+            .orderBy("date", Query.Direction.DESCENDING)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                snapshot?.let { trySend(it.toObjects(Sale::class.java)) }
+            }
+        awaitClose { listener.remove() }
+    }
+
+    override suspend fun updateSale(sale: Sale) {
+        try {
+            collection.document(sale.id).set(sale).await()
+        } catch (e: Exception) {
+            throw e
+        }
+    }
+
+    override suspend fun deleteSale(saleId: String) {
+        try {
+            collection.document(saleId).delete().await()
+        } catch (e: Exception) {
+            throw e
+        }
     }
 }
