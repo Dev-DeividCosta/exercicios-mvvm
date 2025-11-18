@@ -5,9 +5,9 @@ data class Product(
     val name: String,
     val price: Double,
     val description: String,
-    val imageUrl: String
+    val stockQuantity: Int
 ) {
     constructor() : this(
-        "", "", 0.0, "", ""
+        "", "", 0.0, "", 0
     )
 }
