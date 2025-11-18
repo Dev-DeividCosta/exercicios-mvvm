@@ -1,7 +1,7 @@
 package com.example.myapplication.data.repository
 
 import com.example.myapplication.domain.model.Client
-import com.example.padrecicero.domain.repository.ClientRepository
+import com.example.myapplication.domain.repository.ClientRepository
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
