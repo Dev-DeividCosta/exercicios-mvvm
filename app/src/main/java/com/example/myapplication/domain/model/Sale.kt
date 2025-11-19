@@ -2,12 +2,26 @@ package com.example.myapplication.domain.model
 
 data class Sale(
     val id: String,
+    val clientId: String,
     val clientName: String,
+    val productId: String,
     val productName: String,
+    val quantity: Int,
     val installments: Int,
-    val observation: String
+    val totalValue: Double,
+    val observation: String,
+    val date: Long
 ) {
     constructor() : this(
-        "", "", "", 0, ""
+        "",
+        "",
+        "",
+        "",
+        "",
+        1,
+        1,
+        0.0,
+        "",
+        System.currentTimeMillis()
     )
 }

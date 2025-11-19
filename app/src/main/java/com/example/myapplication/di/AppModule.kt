@@ -9,6 +9,7 @@ import com.example.myapplication.domain.repository.ProductRepository
 import com.example.myapplication.domain.repository.SaleRepository
 import com.example.myapplication.domain.repository.UserRepository
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FirebaseFirestoreSettings
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -19,14 +20,20 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object AppModule {
 
-    // 1. Provê a instância única do Firestore para o app todo
+    // Firestore com modo Offline habilitado
     @Provides
     @Singleton
     fun provideFirestoreInstance(): FirebaseFirestore {
-        return FirebaseFirestore.getInstance()
+        val db = FirebaseFirestore.getInstance()
+
+        db.firestoreSettings = FirebaseFirestoreSettings.Builder()
+            .setPersistenceEnabled(true) // ESSENCIAL
+            .build()
+
+        return db
     }
 
-    // 2. Provê o ProductRepository
+    // ProductRepository
     @Provides
     @Singleton
     fun provideProductRepository(
@@ -35,7 +42,7 @@ object AppModule {
         return ProductRepositoryImpl(firestore = firestore)
     }
 
-    // 3. Provê o ClientRepository (NOVO)
+    // ClientRepository
     @Provides
     @Singleton
     fun provideClientRepository(
@@ -44,7 +51,7 @@ object AppModule {
         return ClientRepositoryImpl(firestore = firestore)
     }
 
-    // 4. Provê o SaleRepository (NOVO)
+    // SaleRepository
     @Provides
     @Singleton
     fun provideSaleRepository(
@@ -53,7 +60,7 @@ object AppModule {
         return SaleRepositoryImpl(firestore = firestore)
     }
 
-    // 5. Provê o UserRepository (NOVO)
+    // UserRepository
     @Provides
     @Singleton
     fun provideUserRepository(

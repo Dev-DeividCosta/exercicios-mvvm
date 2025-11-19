@@ -83,4 +83,16 @@ class ProductRepositoryImpl @Inject constructor(
             throw e
         }
     }
+
+    override suspend fun getProductByIdSync(productId: String): Product? {
+        if (productId.isBlank()) return null
+
+        return try {
+            val snapshot = productsCollection.document(productId).get().await()
+            snapshot.toObject(Product::class.java)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
 }

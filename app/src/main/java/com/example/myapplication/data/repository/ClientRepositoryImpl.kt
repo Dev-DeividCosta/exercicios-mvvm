@@ -15,23 +15,31 @@ class ClientRepositoryImpl @Inject constructor(
 
     private val collection = firestore.collection("clients")
 
+    /**
+     * Cria um novo cliente no Firestore.
+     * REMOVEMOS O .await() para garantir que retorne imediatamente (offline-first).
+     */
     override suspend fun createClient(client: Client) {
         try {
             // Cria uma referência de documento vazia para gerar o ID
             val docRef = collection.document()
 
             // Copia o cliente inserindo o ID gerado
-            // O objeto Address dentro dele será salvo automaticamente pelo Firestore
             val newClient = client.copy(id = docRef.id)
 
-            // Salva no banco
-            docRef.set(newClient).await()
+            // Salva no banco e retorna IMEDIATAMENTE.
+            // O Firestore fará a sincronização em background.
+            docRef.set(newClient)
         } catch (e: Exception) {
             e.printStackTrace()
+            // Isso só capturará erros de escrita local (ex: permissão negada localmente).
             throw e
         }
     }
 
+    /**
+     * Obtém todos os clientes em tempo real (Mantido o .addSnapshotListener).
+     */
     override fun getAllClients(): Flow<List<Client>> = callbackFlow {
         // O listener garante atualização em tempo real
         val listener = collection.addSnapshotListener { snapshot, error ->
@@ -49,6 +57,9 @@ class ClientRepositoryImpl @Inject constructor(
         awaitClose { listener.remove() }
     }
 
+    /**
+     * Obtém um cliente específico em tempo real (Mantido o .addSnapshotListener).
+     */
     override fun getClientById(clientId: String): Flow<Client?> = callbackFlow {
         val listener = collection.document(clientId).addSnapshotListener { snapshot, error ->
             if (error != null) {
@@ -64,18 +75,27 @@ class ClientRepositoryImpl @Inject constructor(
         awaitClose { listener.remove() }
     }
 
+    /**
+     * Atualiza um cliente existente.
+     * REMOVEMOS O .await() para garantir que retorne imediatamente (offline-first).
+     */
     override suspend fun updateClient(client: Client) {
         try {
-            // Isso atualiza tudo, inclusive se o endereço tiver mudado
-            collection.document(client.id).set(client).await()
+            // Isso atualiza tudo. Removemos o .await()
+            collection.document(client.id).set(client)
         } catch (e: Exception) {
             throw e
         }
     }
 
+    /**
+     * Deleta um cliente existente.
+     * REMOVEMOS O .await() para garantir que retorne imediatamente (offline-first).
+     */
     override suspend fun deleteClient(clientId: String) {
         try {
-            collection.document(clientId).delete().await()
+            // Removemos o .await()
+            collection.document(clientId).delete()
         } catch (e: Exception) {
             throw e
         }

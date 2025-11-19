@@ -9,4 +9,5 @@ interface ProductRepository {
     fun getProductById(productId: String): Flow<Product?>
     suspend fun updateProduct(product: Product)
     suspend fun deleteProduct(productId: String)
+    suspend fun getProductByIdSync(productId: String): Product?
 }
