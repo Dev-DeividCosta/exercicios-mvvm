@@ -16,14 +16,15 @@ class SaleRepositoryImpl @Inject constructor(
 
     private val collection = firestore.collection("sales")
 
+    // REMOVIDO .await() para manter consistência Offline-First
     override suspend fun createSale(sale: Sale) {
         try {
             val docRef = collection.document()
             val newSale = sale.copy(id = docRef.id)
-            docRef.set(newSale).await()
+            docRef.set(newSale) // Sem await()
         } catch (e: Exception) {
             e.printStackTrace()
-            throw e
+            throw e // Erros aqui serão apenas de validação local
         }
     }
 
@@ -43,7 +44,7 @@ class SaleRepositoryImpl @Inject constructor(
     override fun getSalesByClientId(clientId: String): Flow<List<Sale>> = callbackFlow {
         val listener = collection
             .whereEqualTo("clientId", clientId)
-            .orderBy("date", Query.Direction.DESCENDING)
+            .orderBy("date", Query.Direction.DESCENDING) // Requer Índice no Firebase
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     close(error)
@@ -71,8 +72,9 @@ class SaleRepositoryImpl @Inject constructor(
 
     override fun getSalesBySellerId(sellerId: String): Flow<List<Sale>> = callbackFlow {
         val listener = collection
-            .whereEqualTo("sellerId", sellerId)
-            .orderBy("date", Query.Direction.DESCENDING)
+            // ATENÇÃO: Confirme se no banco é "sellerId" ou "sellerDeviceId"
+            .whereEqualTo("sellerDeviceId", sellerId)
+            .orderBy("date", Query.Direction.DESCENDING) // Requer Índice no Firebase
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     close(error)
@@ -83,17 +85,19 @@ class SaleRepositoryImpl @Inject constructor(
         awaitClose { listener.remove() }
     }
 
+    // REMOVIDO .await()
     override suspend fun updateSale(sale: Sale) {
         try {
-            collection.document(sale.id).set(sale).await()
+            collection.document(sale.id).set(sale)
         } catch (e: Exception) {
             throw e
         }
     }
 
+    // REMOVIDO .await()
     override suspend fun deleteSale(saleId: String) {
         try {
-            collection.document(saleId).delete().await()
+            collection.document(saleId).delete()
         } catch (e: Exception) {
             throw e
         }

@@ -2,80 +2,176 @@ package com.example.myapplication.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.myapplication.domain.model.Client
+import com.example.myapplication.domain.model.Product
+import com.example.myapplication.domain.model.Sale
+import com.example.myapplication.domain.model.SaleItem
+import com.example.myapplication.domain.repository.ClientRepository
+import com.example.myapplication.domain.repository.ProductRepository
 import com.example.myapplication.domain.usecase.CreateSaleUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import java.lang.IllegalArgumentException
-import java.util.NoSuchElementException
 
-// 1. Definição do Estado da UI (para a tela saber o que mostrar)
-sealed interface SaleUiState {
-    data object Idle : SaleUiState
-    data object Loading : SaleUiState
-    data object Success : SaleUiState
-    data class Error(val message: String) : SaleUiState
-}
+// ----------------------------------------------------
+// MODELO DE ESTADO DA UI (SALE)
+// ----------------------------------------------------
+data class SaleUiState(
+    val currentSale: Sale = Sale(), // A venda sendo construída
+    val availableProducts: List<Product> = emptyList(), // Lista para o modal de seleção
+    val availableClients: List<Client> = emptyList(), // Lista para o modal de seleção
+    val isLoading: Boolean = false,
+    val saveSuccess: Boolean = false,
+    val errorMessage: String? = null
+)
 
+// ----------------------------------------------------
+// VIEW MODEL
+// ----------------------------------------------------
 @HiltViewModel
 class SaleViewModel @Inject constructor(
-    // 2. Injetando o Caso de Uso de Venda
-    private val createSaleUseCase: CreateSaleUseCase
-    // Nota: Se precisarmos de uma lista de produtos, injetamos o ProductRepository aqui
-    // mas para o save, apenas o UseCase basta.
+    private val createSaleUseCase: CreateSaleUseCase,
+    private val productRepository: ProductRepository, // Para listar produtos na tela
+    private val clientRepository: ClientRepository    // Para listar clientes na tela
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<SaleUiState>(SaleUiState.Idle)
+    private val _uiState = MutableStateFlow(SaleUiState())
     val uiState: StateFlow<SaleUiState> = _uiState.asStateFlow()
 
-    fun saveSale(
-        // Os nomes são usados temporariamente, mas vamos precisar do ID do Produto
-        selectedProductId: String,
-        clientName: String,
-        quantity: Int = 1, // Por enquanto, fixo em 1
-        installments: Int,
-        observation: String
-    ) {
-        if (selectedProductId.isBlank()) {
-            _uiState.value = SaleUiState.Error("Selecione um produto antes de salvar.")
-            return
-        }
+    init {
+        // Carrega as listas necessárias para fazer uma venda
+        loadDependencies()
+    }
 
+    private fun loadDependencies() {
         viewModelScope.launch {
-            _uiState.value = SaleUiState.Loading
-
-            try {
-                // 3. Executando a lógica de negócio (Use Case)
-                createSaleUseCase.execute(
-                    selectedProductId = selectedProductId,
-                    clientName = clientName,
-                    quantity = quantity,
-                    installments = installments,
-                    observation = observation
-                )
-
-                _uiState.value = SaleUiState.Success
-
-            } catch (e: NoSuchElementException) {
-                // 4. Tratamento de Erro de Lógica (Produto não existe)
-                _uiState.value = SaleUiState.Error(e.message ?: "Produto não encontrado durante a venda.")
-            } catch (e: IllegalArgumentException) {
-                // 4. Tratamento de Erro de Argumento (ID inválido)
-                _uiState.value = SaleUiState.Error(e.message ?: "Dados inválidos.")
-            } catch (e: Exception) {
-                // 4. Tratamento de Erro Geral (Rede/Firebase)
-                _uiState.value = SaleUiState.Error(e.localizedMessage ?: "Falha desconhecida ao salvar a venda.")
+            // Carrega produtos
+            launch {
+                productRepository.getAllProducts().collect { products ->
+                    _uiState.update { it.copy(availableProducts = products) }
+                }
+            }
+            // Carrega clientes
+            launch {
+                clientRepository.getAllClients().collect { clients ->
+                    _uiState.update { it.copy(availableClients = clients) }
+                }
             }
         }
     }
 
     /**
-     * Reseta o estado da UI para 'Idle' (para fechar a Snackbar, por exemplo).
+     * Define o cliente da venda.
      */
-    fun resetUiState() {
-        _uiState.value = SaleUiState.Idle
+    fun selectClient(client: Client) {
+        _uiState.update { state ->
+            state.copy(
+                currentSale = state.currentSale.copy(
+                    clientId = client.id,
+                    clientName = client.name
+                )
+            )
+        }
+    }
+
+    /**
+     * Adiciona um produto à lista de itens da venda.
+     * Recalcula o total automaticamente.
+     */
+    fun addProductToSale(product: Product, quantity: Int) {
+        _uiState.update { state ->
+            val newItem = SaleItem(
+                productId = product.id,
+                productName = product.name,
+                quantity = quantity,
+                unitPrice = product.price // Supondo que Product tenha 'price'
+            )
+
+            // Cria nova lista de itens
+            val newItems = state.currentSale.items + newItem
+
+            // Recalcula total
+            val newTotal = newItems.sumOf { it.subtotal }
+
+            state.copy(
+                currentSale = state.currentSale.copy(
+                    items = newItems,
+                    totalValue = newTotal
+                )
+            )
+        }
+    }
+
+    /**
+     * Remove um item da venda.
+     */
+    fun removeItem(itemIndex: Int) {
+        _uiState.update { state ->
+            val newItems = state.currentSale.items.toMutableList().apply {
+                removeAt(itemIndex)
+            }
+            val newTotal = newItems.sumOf { it.subtotal }
+
+            state.copy(
+                currentSale = state.currentSale.copy(
+                    items = newItems,
+                    totalValue = newTotal
+                )
+            )
+        }
+    }
+
+    /**
+     * Atualiza o número de parcelas.
+     */
+    fun updateInstallments(count: Int) {
+        _uiState.update { state ->
+            state.copy(currentSale = state.currentSale.copy(installments = count))
+        }
+    }
+
+    /**
+     * Atualiza a observação.
+     */
+    fun updateObservation(text: String) {
+        _uiState.update { state ->
+            state.copy(currentSale = state.currentSale.copy(observation = text))
+        }
+    }
+
+    /**
+     * Salva a venda usando o UseCase (que injeta o ID do device automaticamente).
+     */
+    fun saveSale() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+
+            val result = createSaleUseCase(_uiState.value.currentSale)
+
+            result.onSuccess {
+                _uiState.update { state ->
+                    state.copy(
+                        isLoading = false,
+                        saveSuccess = true,
+                        currentSale = Sale() // Limpa o formulário para nova venda
+                    )
+                }
+            }.onFailure { error ->
+                _uiState.update { state ->
+                    state.copy(
+                        isLoading = false,
+                        errorMessage = error.message ?: "Erro desconhecido"
+                    )
+                }
+            }
+        }
+    }
+
+    fun resetSuccessState() {
+        _uiState.update { it.copy(saveSuccess = false) }
     }
 }
