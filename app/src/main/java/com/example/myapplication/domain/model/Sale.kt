@@ -10,7 +10,8 @@ data class Sale(
     val installments: Int,
     val totalValue: Double,
     val observation: String,
-    val date: Long
+    val date: Long,
+    val deviceId: String
 ) {
     constructor() : this(
         "",
@@ -22,6 +23,7 @@ data class Sale(
         1,
         0.0,
         "",
-        System.currentTimeMillis()
+        System.currentTimeMillis(),
+        ""
     )
 }
