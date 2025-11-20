@@ -2,10 +2,16 @@ package com.example.myapplication.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+// Paleta principal fixa
+val PrimaryBlue = Color(0xFF0D47A1)      // Azul profundo profissional
+val SecondaryGrey = Color(0xFF546E7A)    // Cinza neutro
+val TertiaryBlueGrey = Color(0xFF455A64) // Azul acinzentado elegante
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+// Fundo e superfícies
+val BackgroundWhite = Color(0xFFFFFFFF)
+val SurfaceWhite = Color(0xFFFFFFFF)
+
+// Cores de status (opcional)
+val SuccessGreen = Color(0xFF4CAF50)
+val WarningYellow = Color(0xFFFFC107)
+val ErrorRed = Color(0xFFF44336)

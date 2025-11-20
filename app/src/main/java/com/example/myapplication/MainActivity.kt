@@ -9,7 +9,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.myapplication.ui.screens.ClientScreen
+import com.example.myapplication.ui.navigation.AppNavigator
 import com.example.myapplication.ui.theme.MyApplicationTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -29,11 +29,6 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-}
-
-@Composable
-fun AppNavigator() {
-    ClientScreen()
 }
 
 @Preview(showBackground = true)

@@ -74,4 +74,7 @@ dependencies {
 
     implementation("androidx.navigation:navigation-compose:2.7.5")
     implementation("androidx.hilt:hilt-navigation-compose:1.1.0")
+
+    implementation("androidx.compose.foundation:foundation-layout-android:1.6.0")
+    implementation("androidx.compose.foundation:foundation-android:1.6.0")
 }
