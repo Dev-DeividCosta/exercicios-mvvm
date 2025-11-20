@@ -11,7 +11,7 @@ data class Sale(
     val totalValue: Double,
     val observation: String,
     val date: Long,
-    val deviceId: String
+    val sellerDeviceId: String
 ) {
     constructor() : this(
         "",
