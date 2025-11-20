@@ -1,11 +1,12 @@
 package com.example.myapplication.domain.model
 
-// Bônus: Para gerenciar Cobradores e Vendedores
+import androidx.annotation.Keep
+
+@Keep
 data class User(
     val id: String,
     val name: String,
-    val role: String // "VENDEDOR", "COBRADOR", "ADMIN"
+    val role: String
 ) {
-    // Construtor vazio para o Firestore
     constructor() : this("", "", "")
 }

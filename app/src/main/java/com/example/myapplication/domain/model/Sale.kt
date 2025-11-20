@@ -1,5 +1,8 @@
 package com.example.myapplication.domain.model
 
+import androidx.annotation.Keep
+
+@Keep
 data class Sale(
     val id: String,
     val clientId: String,
