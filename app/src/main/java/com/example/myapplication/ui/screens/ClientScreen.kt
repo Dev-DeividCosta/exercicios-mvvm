@@ -1,26 +1,36 @@
 package com.example.myapplication.ui.screens
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.myapplication.ui.utils.MaskVisualTransformation
+import com.example.myapplication.ui.utils.PhoneVisualTransformation
 import com.example.myapplication.ui.viewmodel.ClientViewModel
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
 
 @Composable
 fun ClientScreen(
     viewModel: ClientViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
+    val scrollState = rememberScrollState()
+
+    val cpfMask = remember { MaskVisualTransformation("###.###.###-##") }
+    val phoneMask = remember { MaskVisualTransformation("(##) # ####-####") }
+
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(16.dp)
+            .verticalScroll(scrollState),
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -32,7 +42,6 @@ fun ClientScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Nome
         OutlinedTextField(
             value = state.client.name,
             onValueChange = { viewModel.onFieldChange("name", it) },
@@ -42,34 +51,35 @@ fun ClientScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // CPF
         OutlinedTextField(
             value = state.client.cpf,
-            onValueChange = { viewModel.onFieldChange("cpf", it) },
+            onValueChange = {
+                if (it.length <= 11 && it.all { char -> char.isDigit() }) {
+                    viewModel.onFieldChange("cpf", it)
+                }
+            },
             label = { Text("CPF") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            visualTransformation = cpfMask,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
         )
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Telefone
         OutlinedTextField(
             value = state.client.phone,
-            onValueChange = { viewModel.onFieldChange("phone", it) },
+            onValueChange = {
+                if (it.length <= 11 && it.all { char -> char.isDigit() }) {
+                    viewModel.onFieldChange("phone", it)
+                }
+            },
             label = { Text("Telefone") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            visualTransformation = phoneMask,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
         )
 
         Spacer(modifier = Modifier.height(16.dp))
-
-        // Endereço
-        OutlinedTextField(
-            value = state.client.address.zipCode,
-            onValueChange = { viewModel.onFieldChange("zipCode", it) },
-            label = { Text("CEP") },
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.height(8.dp))
 
         OutlinedTextField(
             value = state.client.address.city,
@@ -77,6 +87,16 @@ fun ClientScreen(
             label = { Text("Cidade") },
             modifier = Modifier.fillMaxWidth()
         )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        OutlinedTextField(
+            value = state.client.address.neighborhood,
+            onValueChange = { viewModel.onFieldChange("neighborhood", it) },
+            label = { Text("Bairro") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
         Spacer(modifier = Modifier.height(8.dp))
 
         OutlinedTextField(
@@ -85,20 +105,30 @@ fun ClientScreen(
             label = { Text("Rua") },
             modifier = Modifier.fillMaxWidth()
         )
+
         Spacer(modifier = Modifier.height(8.dp))
 
         OutlinedTextField(
-            value = state.client.address.houseNumber,
-            onValueChange = { viewModel.onFieldChange("houseNumber", it) },
-            label = { Text("Número da Casa") },
+            value = state.client.address.number,
+            onValueChange = { viewModel.onFieldChange("number", it) },
+            label = { Text("Número") },
+            modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        OutlinedTextField(
+            value = state.complementInput,
+            onValueChange = { viewModel.onFieldChange("complement", it) },
+            label = { Text("Complemento") },
             modifier = Modifier.fillMaxWidth()
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
         Button(
-            onClick = { viewModel.saveClient() },
-            // O botão só é habilitado se o form for válido E não estiver carregando
+            onClick = { viewModel.saveClient("user_default") },
             enabled = state.isFormValid && !state.isLoading,
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -113,7 +143,6 @@ fun ClientScreen(
             )
         }
 
-        // --- NOVO ALERT DIALOG PARA SUCESSO ---
         if (state.saveSuccess) {
             ClientSuccessAlertDialog(
                 onDismiss = { viewModel.resetSuccessState() }
@@ -122,26 +151,20 @@ fun ClientScreen(
     }
 }
 
-/**
- * AlertDialog elegante para informar sucesso (Heurística de Nielsen).
- */
 @Composable
 fun ClientSuccessAlertDialog(
     onDismiss: () -> Unit
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-
         title = {
             Text(text = "Sucesso!")
         },
-
         text = {
             Column {
                 Text("O novo cliente foi salvo com sucesso.")
             }
         },
-
         confirmButton = {
             Button(onClick = onDismiss) {
                 Text("Continuar")

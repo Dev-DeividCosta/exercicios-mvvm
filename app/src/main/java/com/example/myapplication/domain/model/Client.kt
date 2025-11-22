@@ -8,9 +8,10 @@ data class Client(
     val name: String,
     val cpf: String,
     val phone: String,
-    val address: Address
+    val address: Address,
+    val routeIndex: Int = 0
 ) {
     constructor() : this(
-        "", "", "", "", Address()
+        "", "", "", "", Address(), 0
     )
 }

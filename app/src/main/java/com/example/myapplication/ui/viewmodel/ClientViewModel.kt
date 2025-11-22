@@ -3,7 +3,6 @@ package com.example.myapplication.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.myapplication.domain.model.Client
-import com.example.myapplication.domain.model.Address
 import com.example.myapplication.domain.usecase.CreateClientUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,95 +11,93 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-// ----------------------------------------------------
-// MODELO DE ESTADO DA UI
-// ----------------------------------------------------
 data class ClientUiState(
     val client: Client = Client(),
+    val complementInput: String = "",
     val isLoading: Boolean = false,
     val isFormValid: Boolean = true,
     val errorMessage: String? = null,
     val saveSuccess: Boolean = false
 )
 
-// ----------------------------------------------------
-// VIEW MODEL
-// ----------------------------------------------------
 @HiltViewModel
 class ClientViewModel @Inject constructor(
     private val createClientUseCase: CreateClientUseCase
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(ClientUiState(isFormValid = true))
+    private val _uiState = MutableStateFlow(ClientUiState())
     val uiState: StateFlow<ClientUiState> = _uiState
 
-    /**
-     * Atualiza um campo de texto.
-     */
     fun onFieldChange(field: String, value: String) {
         _uiState.update { currentState ->
-            val updatedClient = when (field) {
-                "name" -> currentState.client.copy(name = value)
-                "cpf" -> currentState.client.copy(cpf = value)
-                "phone" -> currentState.client.copy(phone = value)
-                // Acesso aninhado para o Address
-                "zipCode" -> currentState.client.copy(address = currentState.client.address.copy(zipCode = value))
-                "city" -> currentState.client.copy(address = currentState.client.address.copy(city = value))
-                "street" -> currentState.client.copy(address = currentState.client.address.copy(street = value))
-                "houseNumber" -> currentState.client.copy(address = currentState.client.address.copy(houseNumber = value))
-                else -> currentState.client
+            val (updatedClient, updatedComplement) = when (field) {
+                "name" -> currentState.client.copy(name = value) to currentState.complementInput
+                "cpf" -> currentState.client.copy(cpf = value) to currentState.complementInput
+                "phone" -> currentState.client.copy(phone = value) to currentState.complementInput
+                "city" -> currentState.client.copy(
+                    address = currentState.client.address.copy(city = value)
+                ) to currentState.complementInput
+                "neighborhood" -> currentState.client.copy(
+                    address = currentState.client.address.copy(neighborhood = value)
+                ) to currentState.complementInput
+                "street" -> currentState.client.copy(
+                    address = currentState.client.address.copy(street = value)
+                ) to currentState.complementInput
+                "number" -> currentState.client.copy(
+                    address = currentState.client.address.copy(number = value)
+                ) to currentState.complementInput
+                "complement" -> currentState.client to value
+                else -> currentState.client to currentState.complementInput
             }
 
-            // Atualiza o estado
             currentState.copy(
                 client = updatedClient,
+                complementInput = updatedComplement,
                 isFormValid = true,
                 errorMessage = null
             )
         }
     }
 
-    /**
-     * Orquestra a criação do cliente.
-     * Retorna sucesso IMEDIATAMENTE devido à alteração no Repository.
-     */
-    fun saveClient() {
+    fun saveClient(userId: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-            val clientToSave = _uiState.value.client
+
+            val currentState = _uiState.value
 
             try {
-                // Chama o Use Case (que agora é instantâneo)
+                val addressWithComplement = currentState.client.address.copy(
+                    userComplements = mapOf(userId to currentState.complementInput)
+                )
+
+                val clientToSave = currentState.client.copy(
+                    address = addressWithComplement
+                )
+
                 createClientUseCase(clientToSave)
 
-                // Sucesso (Executado imediatamente)
-                _uiState.update { it.copy(
-                    isLoading = false,
-                    saveSuccess = true,
-                    client = Client(),
-                    isFormValid = true
-                ) }
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        saveSuccess = true,
+                        client = Client(),
+                        complementInput = "",
+                        isFormValid = true
+                    )
+                }
 
             } catch (e: Exception) {
-                // Erro (Apenas se houver falha de escrita local)
-                _uiState.update { it.copy(
-                    isLoading = false,
-                    errorMessage = "Falha ao salvar: ${e.message}"
-                ) }
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = "Falha ao salvar: ${e.message}"
+                    )
+                }
             }
         }
     }
 
-    /**
-     * Limpa o estado de sucesso.
-     */
     fun resetSuccessState() {
         _uiState.update { it.copy(saveSuccess = false) }
-    }
-
-    // A função validateForm foi mantida, embora atualmente retorne sempre true,
-    // garantindo que o botão esteja sempre ativo.
-    private fun validateForm(client: Client): Boolean {
-        return true
     }
 }

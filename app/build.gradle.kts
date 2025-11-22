@@ -77,4 +77,6 @@ dependencies {
 
     implementation("androidx.compose.foundation:foundation-layout-android:1.6.0")
     implementation("androidx.compose.foundation:foundation-android:1.6.0")
+
+    implementation("androidx.compose.material:material-icons-extended:1.6.8")
 }

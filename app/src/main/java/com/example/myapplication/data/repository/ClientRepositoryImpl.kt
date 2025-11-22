@@ -62,6 +62,16 @@ class ClientRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun updateClientComplement(clientId: String, userId: String, complement: String) {
+        try {
+            collection.document(clientId)
+                .update("address.userComplements.$userId", complement)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            throw e
+        }
+    }
+
     override suspend fun deleteClient(clientId: String) {
         try {
             collection.document(clientId).delete()
